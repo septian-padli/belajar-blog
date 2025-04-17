@@ -26,20 +26,20 @@ export async function login(formData: FormData) {
   redirect('/')
 }
 
-export async function logout() {
-  const cookieStore = cookies()
-  const supabase = createServerActionClient({ cookies: () => cookieStore })
+// export async function logout() {
+//   const cookieStore = cookies()
+//   const supabase = createServerActionClient({ cookies: () => cookieStore })
 
-  const { error } = await supabase.auth.signOut()
+//   const { error } = await supabase.auth.signOut()
 
-  if (error) {
-    console.error('Logout error:', error.message)
-    redirect('/error')
-  }
+//   if (error) {
+//     console.error('Logout error:', error.message)
+//     redirect('/error')
+//   }
 
-  revalidatePath('/', 'layout')
-  redirect('/login')
-}
+//   revalidatePath('/', 'layout')
+//   redirect('/login')
+// }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
