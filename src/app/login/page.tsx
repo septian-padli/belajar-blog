@@ -2,8 +2,7 @@ import Image from "next/image"
 import { LoginForm } from "./components/login-form"
 import { cn } from "@/lib/utils"
 
-
-export default function LoginPage() {
+export default async function LoginPage() {
 
     return (
         <div className="grid min-h-svh lg:grid-cols-2">
