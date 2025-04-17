@@ -15,7 +15,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FormSearch } from "./form-search"
-import { logout } from "@/app/login/actions"
 
 
 export default function Navbar() {
@@ -136,9 +135,7 @@ export default function Navbar() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                            <button onClick={logout}>
-                                <Link href={""} className="text-rose-400">Logout</Link>
-                            </button>
+                            <Link href={""} className="text-rose-400">Logout</Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
