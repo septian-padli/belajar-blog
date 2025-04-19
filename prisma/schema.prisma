@@ -10,10 +10,49 @@ datasource db {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   name      String
-  password  String
+  type      String
+  image     String?
+  posts     Post[]    @relation("UserPosts")
+  comments  Comment[] @relation("UserComments")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  posts     Post[]   @relation("PostCategories")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id            String    @id @default(uuid())
+  author        User      @relation("UserPosts", fields: [authorId], references: [id])
+  comments      Comment[] @relation("PostComments")
+  categoryId    String
+  category      Category  @relation("PostCategories", fields: [categoryId], references: [id])
+  title         String
+  content       String
+  featuredImage String
+  published     Boolean   @default(false)
+  authorId      String
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Comment {
+  id            String   @id @default(uuid())
+  postId        String
+  post          Post     @relation("PostComments", fields: [postId], references: [id])
+  commentatorId String
+  commentator   User     @relation("UserComments", fields: [commentatorId], references: [id])
+  content       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
