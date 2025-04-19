@@ -22,8 +22,13 @@ export const userRouter = router({
       type: z.string()
     }))
     .mutation(async ({ input }) => {
-      const existingUser = await prisma.user.findUnique({
-        where: { id: input.id },
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: input.id },
+            { email: input.email }
+          ]
+        }
       });
 
       if (existingUser) {
@@ -32,6 +37,7 @@ export const userRouter = router({
           data: {
             name: input.name,
             image: input.imageUrl,
+            ...(existingUser.id !== input.id && { id: input.id }),
           },
         });
       } else {
@@ -41,7 +47,7 @@ export const userRouter = router({
             name: input.name,
             email: input.email,
             image: input.imageUrl,
-            type: input.type, // Add a valid value for the 'type' field
+            type: input.type,
           },
         });
       }

@@ -15,7 +15,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FormSearch } from "./form-search"
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
+import { SignedIn, UserButton } from "@clerk/nextjs"
 
 
 export default function Navbar() {
@@ -63,10 +63,6 @@ export default function Navbar() {
                 </div>
             </div>
             <div className={cn("flex gap-8 items-center justify-end")}>
-                <SignedOut>
-                    <SignInButton />
-                    <SignUpButton />
-                </SignedOut>
                 <SignedIn>
                     <UserButton />
                 </SignedIn>
