@@ -5,6 +5,7 @@ import {
   ClerkProvider,
 } from '@clerk/nextjs'
 import { dark } from '@clerk/themes'
+import TrpcProvider from "@/components/TrpcProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
     }}>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}>
-          {children}
+          <TrpcProvider>
+            {children}
+          </TrpcProvider>
         </body>
       </html>
     </ClerkProvider>
