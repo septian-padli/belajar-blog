@@ -14,8 +14,8 @@ export default async function HomeLayout({
   const clerk = await clerkClient();
   const clerkUser = await clerk.users.getUser(userId);
 
-  const syncWithSupabase = await getTrpcCaller();
-  await syncWithSupabase.user.syncWithSupabase({
+  const trpc = await getTrpcCaller();
+  await trpc.user.syncWithSupabase({
     id: clerkUser.id,
     name: `${clerkUser.firstName} ${clerkUser.lastName}`,
     email: clerkUser.emailAddresses[0]?.emailAddress,
@@ -25,7 +25,7 @@ export default async function HomeLayout({
 
   return (
     <div className={cn("container")}>
-      <Navbar />
+      <Navbar user={clerkUser} />
       {/* body */}
       {children}
     </div>

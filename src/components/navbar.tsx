@@ -15,10 +15,17 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FormSearch } from "./form-search"
-import { SignedIn, UserButton } from "@clerk/nextjs"
+import { SignOutButton } from "@clerk/nextjs"
+import { User } from "@clerk/nextjs/server"
 
 
-export default function Navbar() {
+// Define the NavbarProps type
+interface NavbarProps {
+    user: User;
+}
+
+export default function Navbar({ user }: NavbarProps) {
+
 
     return (
         <header className={cn("flex h-20 w-full shrink-0 items-center lg:justify-between border-b border-zinc-800 mb-4")}>
@@ -63,10 +70,6 @@ export default function Navbar() {
                 </div>
             </div>
             <div className={cn("flex gap-8 items-center justify-end")}>
-                <SignedIn>
-                    <UserButton />
-                </SignedIn>
-
                 <Link href={"post/create"} className={cn("flex gap-2")}>
                     <Pencil size={20} color="#ffffff" />
                     <p>Menulis</p>
@@ -76,22 +79,32 @@ export default function Navbar() {
                 <DropdownMenu>
                     <DropdownMenuTrigger>
                         <Avatar>
-                            <AvatarImage src="https://github.com/shadcn.png" />
-                            <AvatarFallback>CN</AvatarFallback>
+                            <AvatarImage src={user.hasImage ? user.imageUrl : ""} />
+                            <AvatarFallback>
+                                {user.firstName?.charAt(0).toUpperCase()}
+                                {user.lastName?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
                         </Avatar>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Septian Padli</DropdownMenuLabel>
+                        <DropdownMenuLabel>
+                            {`${user.firstName} ${user.lastName}`}
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                            <Link href={""}>Profile</Link>
+                            <Link href={"/"}>Beranda</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Link href={"/profile"}>Profile</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                             <Link href={""}>Postingan</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                            <Link href={""} className="text-rose-400">Logout</Link>
+                            <SignOutButton >
+                                <p className="text-rose-400">Logout</p>
+                            </SignOutButton>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

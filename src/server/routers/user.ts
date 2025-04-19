@@ -52,4 +52,18 @@ export const userRouter = router({
         });
       }
     }),
+    getUserById: procedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: input.id,
+        },
+      });
+
+      return user;
+    }),
+
 });
