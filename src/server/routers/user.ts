@@ -1,4 +1,3 @@
-import { clerkClient } from '@clerk/clerk-sdk-node';
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import { prisma } from "../index";
@@ -14,39 +13,37 @@ export const userRouter = router({
             }
         ]
     }),
-    syncWithSupabase: procedure.input(
-        z.object({
-          clerkUserId: z.string().min(1, 'Clerk User ID is required'), // Validasi Clerk User ID menggunakan Zod
-        })
-      ).mutation(async ({ input }) => {
-        const { clerkUserId } = input;
-    
-        // Mengambil data user dari Clerk
-        const clerkUser = await clerkClient.users.getUser(clerkUserId);
-    
-        // Cek apakah user sudah ada di database Supabase
-        const existingUser = await prisma.user.findUnique({
-          where: {
-            id: clerkUser.id, // cek berdasarkan ID dari Clerk
-          },
-        });
-    
-        // Jika user sudah ada di Supabase, kembalikan user yang ada
-        if (existingUser) {
-          return existingUser;
-        }
-    
-        // Jika user belum ada, buat user baru di Supabase menggunakan Prisma
-        const newUser = await prisma.user.create({
+    syncWithSupabase: procedure
+    .input(z.object({
+      id: z.string(), // Clerk ID langsung
+      name: z.string(),
+      email: z.string().email(),
+      imageUrl: z.string().url(),
+      type: z.string()
+    }))
+    .mutation(async ({ input }) => {
+      const existingUser = await prisma.user.findUnique({
+        where: { id: input.id },
+      });
+
+      if (existingUser) {
+        return await prisma.user.update({
+          where: { id: input.id },
           data: {
-            id: clerkUser.id,
-            email: clerkUser.emailAddresses[0]?.emailAddress,
-            type: clerkUser.externalAccounts[0]?.provider,
-            image: clerkUser.imageUrl,
-            name:  `${clerkUser.firstName} ${clerkUser.lastName}`,
+            name: input.name,
+            image: input.imageUrl,
           },
         });
-    
-        return newUser;
-      }),
+      } else {
+        return await prisma.user.create({
+          data: {
+            id: input.id,
+            name: input.name,
+            email: input.email,
+            image: input.imageUrl,
+            type: input.type, // Add a valid value for the 'type' field
+          },
+        });
+      }
+    }),
 });

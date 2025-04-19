@@ -14,7 +14,13 @@ export default function Home() {
   useEffect(() => {
     if (isLoaded && user) {
       // Kirim request sinkronisasi data user ke Supabase melalui tRPC
-      syncWithSupabase.mutate({ clerkUserId: user.id }, {
+      syncWithSupabase.mutate({
+        id: user.id,
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.emailAddresses[0]?.emailAddress,
+        imageUrl: user.imageUrl,
+        type: user.externalAccounts[0]?.provider,
+      }, {
         onError: (error) => {
           console.error("Error syncing with Supabase:", error.message);
         },
