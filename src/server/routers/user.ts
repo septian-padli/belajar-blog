@@ -1,6 +1,7 @@
 import { procedure, router } from "../trpc";
 import { z } from "zod";
 import { prisma } from "../index";
+import { retryConnect } from "@/lib/utils";
 
 
 export const userRouter = router({
@@ -22,14 +23,14 @@ export const userRouter = router({
       type: z.string()
     }))
     .mutation(async ({ input }) => {
-      const existingUser = await prisma.user.findFirst({
+      const existingUser = await retryConnect(() => prisma.user.findFirst({
         where: {
           OR: [
             { id: input.id },
             { email: input.email }
           ]
         }
-      });
+      }));
 
       if (existingUser) {
         return await prisma.user.update({
@@ -57,11 +58,11 @@ export const userRouter = router({
       id: z.string(),
     }))
     .query(async ({ input }) => {
-      const user = await prisma.user.findUnique({
+      const user = await retryConnect(() => prisma.user.findUnique({
         where: {
           id: input.id,
         },
-      });
+      }));
 
       return user;
     }),
