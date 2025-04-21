@@ -21,21 +21,19 @@ import { useState } from "react";
 
 interface modalEditProfileProps {
     user: userType
-
+    onUserUpdated: (updatedUser: userType) => void
 }
 
 const formSchema = z.object({
-    email: z.string().min(2).email(),
     name: z.string().min(2),
 })
 
-const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user }) => {
+const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated }) => {
     const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: user.email ?? "",
             name: user.name ?? "",
         },
     })
@@ -49,7 +47,10 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user }) => {
                 ...values
             }, {
             onSuccess: () => {
-                console.log("Profile updated!");
+                onUserUpdated({
+                    ...user,
+                    ...values,
+                })
                 setIsLoading(false);
             },
             onError: (err) => {
@@ -72,19 +73,6 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user }) => {
                     <div className="flex flex-col gap-4 py-4">
                         <FormField
                             control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Email</FormLabel>
-                                    <FormControl>
-                                        <Input type="email" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
@@ -99,15 +87,18 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user }) => {
                                 </FormItem>
                             )}
                         />
-                        {/* <div className="flex flex-col w-full gap-2">
-                    <Label htmlFor="picture">Photo Profile</Label>
-                    <Input id="picture" type="file" />
-                </div> */}
                     </div>
                     <DialogFooter>
-                        <Button type="submit">
-                            {isLoading ? "Saving..." : "Save changes"}
-                        </Button>
+                        {isLoading ? (
+                            <Button type="submit" disabled={isLoading} className="cursor-default" >
+                                Saving...
+                            </Button>
+                        ) : (
+                            <Button type="submit" className="cursor-pointer">
+                                Save changes
+                            </Button>
+                        )}
+
                     </DialogFooter>
 
                 </form>

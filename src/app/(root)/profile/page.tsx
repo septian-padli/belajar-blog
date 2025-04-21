@@ -4,20 +4,10 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import {
-    Dialog,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import ModalEditProfile from "./components/modalEditProfile"
-
 import { getTrpcCaller } from "@/server/server";
 import { auth } from "@clerk/nextjs/server";
-import { getInitials } from "@/lib/utils";
-
-// import type table user
 import { User as userType } from "@prisma/client";
+import ProfileSection from "./components/profileSection";
 
 
 export default async function ProfilePage() {
@@ -33,31 +23,15 @@ export default async function ProfilePage() {
 
     return (
         <div className="grid grid-cols-2 gap-8">
+            {/* profile */}
             <Card className="col-span-1">
                 <CardHeader>
                     <CardTitle>Profile</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                            <Avatar className="w-16 h-16">
-                                <AvatarImage src={user.image ?? ""} />
-                                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h2 className="text-xl font-semibold">{user.name}</h2>
-                                <p className="text-gray-500">{user.email}</p>
-                            </div>
-                        </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline">Edit Profile</Button>
-                            </DialogTrigger>
-                            <ModalEditProfile user={user} />
-                        </Dialog>
-                    </div>
-                </CardContent>
+                <ProfileSection user={user} />
             </Card>
+
+            {/* postingan */}
             <Card className="col-span-1">
                 <CardHeader>
                     <CardTitle>Postingan</CardTitle>

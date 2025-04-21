@@ -70,16 +70,14 @@ export const userRouter = router({
     .input(z.object({
       id: z.string(), // Clerk ID
       name: z.string().min(1),
-      email: z.string().email(),
     }))
     .mutation(async ({ input }) => {
-      const { id, name, email } = input;
+      const { id, name } = input;
   
       return await retryConnect(() => prisma.user.update({
         where: { id },
         data: {
           name,
-          email,
         },
       }));
     }),
