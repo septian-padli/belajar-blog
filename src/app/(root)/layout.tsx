@@ -1,6 +1,6 @@
 import Navbar from "@/components/navbar";
 import { cn } from "@/lib/utils";
-import { getTrpcCaller } from "@/server/server";
+// import { getTrpcCaller } from "@/server/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export default async function HomeLayout({
@@ -14,14 +14,14 @@ export default async function HomeLayout({
   const clerk = await clerkClient();
   const clerkUser = await clerk.users.getUser(userId);
 
-  const trpc = await getTrpcCaller();
-  await trpc.user.syncWithSupabase({
-    id: clerkUser.id,
-    name: `${clerkUser.firstName} ${clerkUser.lastName}`,
-    email: clerkUser.emailAddresses[0]?.emailAddress,
-    imageUrl: clerkUser.imageUrl,
-    type: clerkUser.externalAccounts?.[0]?.provider,
-  });
+  // const trpc = await getTrpcCaller();
+  // await trpc.user.syncWithSupabase({
+  //   id: clerkUser.id,
+  //   name: `${clerkUser.firstName} ${clerkUser.lastName}`,
+  //   email: clerkUser.emailAddresses[0]?.emailAddress,
+  //   imageUrl: clerkUser.imageUrl,
+  //   type: clerkUser.externalAccounts?.[0]?.provider,
+  // });
 
   return (
     <div className={cn("container")}>
