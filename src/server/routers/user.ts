@@ -66,18 +66,32 @@ export const userRouter = router({
 
       return user;
     }),
+    getImagePathById: procedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const user = await retryConnect(() => prisma.user.findUnique({
+        where: {
+          id: input.id,
+        },
+      }));
+      return user?.image;
+    }),
     updateUser: procedure
     .input(z.object({
       id: z.string(), // Clerk ID
       name: z.string().min(1),
+      image: z.string().optional().nullable(),
     }))
     .mutation(async ({ input }) => {
-      const { id, name } = input;
+      const { id, name, image } = input;
   
       return await retryConnect(() => prisma.user.update({
         where: { id },
         data: {
           name,
+          ...(image ? { image } : {}),
         },
       }));
     }),

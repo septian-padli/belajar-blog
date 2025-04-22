@@ -25,7 +25,7 @@ interface modalEditProfileProps {
 
 const formSchema = z.object({
     name: z.string().min(2),
-    image: z.any().optional(),
+    image: z.any().nullable(),
 })
 
 const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated }) => {
@@ -40,14 +40,20 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
+        console.log("Submitted values:", values);
+
+
+        const formData = new FormData();
+        formData.append("name", values.name);
+
+        if (values.image) {
+            formData.append("image", values.image);
+        }
 
         try {
             const res = await fetch("/api/user/update", {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(values),
+                body: formData,
             });
 
             if (!res.ok) {
@@ -63,6 +69,7 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
             setIsLoading(false);
         }
     }
+
 
 
     return (
@@ -93,7 +100,7 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
                             )} />
                         <FormField
                             control={form.control}
-                            name="name"
+                            name="image"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Profile</FormLabel>
