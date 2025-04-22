@@ -16,7 +16,6 @@ import { User as userType } from "@prisma/client";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { trpc } from "@/server/client";
 import { useState } from "react";
 
 interface modalEditProfileProps {
@@ -26,6 +25,7 @@ interface modalEditProfileProps {
 
 const formSchema = z.object({
     name: z.string().min(2),
+    image: z.any().optional(),
 })
 
 const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated }) => {
@@ -37,28 +37,33 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
             name: user.name ?? "",
         },
     })
-    const updateUser = trpc.user.updateUser.useMutation();
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        setIsLoading(true)
-        updateUser.mutate(
-            {
-                id: user.id,
-                ...values
-            }, {
-            onSuccess: () => {
-                onUserUpdated({
-                    ...user,
-                    ...values,
-                })
-                setIsLoading(false);
-            },
-            onError: (err) => {
-                console.error(err.message);
-                setIsLoading(false);
-            },
-        });
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true);
+
+        try {
+            const res = await fetch("/api/user/update", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(values),
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to update profile");
+            }
+
+            const data = await res.json();
+
+            onUserUpdated(data.user); // Update state parent component
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
     }
+
 
     return (
         <DialogContent className="sm:max-w-lg">
@@ -85,8 +90,23 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
-                            )}
-                        />
+                            )} />
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Profile</FormLabel>
+                                    <FormControl>
+                                        <Input type="file" accept="image/*"
+                                            onChange={(e) => field.onChange(e.target.files?.[0])} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        This is your public photo profile.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
                     </div>
                     <DialogFooter>
                         {isLoading ? (

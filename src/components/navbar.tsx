@@ -92,10 +92,12 @@ export default function Navbar({ user }: NavbarProps) {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>
-                            <Link href={"/"}>Beranda</Link>
+                            <Link href={"/"} className="w-full">Beranda</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                            <Link href={"/profile"}>Profile</Link>
+                            <Link href={"/profile"} className="w-full">
+                                Profile
+                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                             <Link href={""}>Postingan</Link>
