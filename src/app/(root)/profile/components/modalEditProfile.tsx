@@ -17,6 +17,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useState } from "react";
+import ImageCropperModal from "@/components/imageCropper";
 
 interface modalEditProfileProps {
     user: userType
@@ -29,7 +30,10 @@ const formSchema = z.object({
 })
 
 const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated }) => {
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(false);
+    const [openCropper, setOpenCropper] = useState(false);
+    const [imageSrc, setImageSrc] = useState("");
+    const [croppedImage, setCroppedImage] = useState<File | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -38,16 +42,27 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
         },
     })
 
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageSrc(URL.createObjectURL(file));
+            setOpenCropper(true);
+        }
+    };
+
+    const handleImageCropped = (file: File) => {
+        setCroppedImage(file);
+    };
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
-        console.log("Submitted values:", values);
-
 
         const formData = new FormData();
         formData.append("name", values.name);
 
-        if (values.image) {
-            formData.append("image", values.image);
+        if (croppedImage) {
+            formData.append("image", croppedImage);
         }
 
         try {
@@ -80,6 +95,13 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
                     Make changes to your profile here. Click save when you are done.
                 </DialogDescription>
             </DialogHeader>
+            <ImageCropperModal
+                open={openCropper}
+                imageSrc={imageSrc}
+                aspectRatio={1} // or 16/9
+                onClose={() => setOpenCropper(false)}
+                onCropDone={handleImageCropped}
+            />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} >
                     <div className="flex flex-col gap-4 py-4">
@@ -101,19 +123,26 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
                         <FormField
                             control={form.control}
                             name="image"
-                            render={({ field }) => (
+                            render={() => (
                                 <FormItem>
-                                    <FormLabel>Profile</FormLabel>
+                                    <FormLabel>Photo</FormLabel>
                                     <FormControl>
-                                        <Input type="file" accept="image/*"
-                                            onChange={(e) => field.onChange(e.target.files?.[0])} />
+                                        <Input type="file" accept="image/*" onChange={handleImageChange} />
                                     </FormControl>
-                                    <FormDescription>
-                                        This is your public photo profile.
-                                    </FormDescription>
-                                    <FormMessage />
+                                    {croppedImage && (
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            className="mt-2"
+                                            onClick={() => setOpenCropper(true)}
+                                        >
+                                            Edit Image
+                                        </Button>
+                                    )}
                                 </FormItem>
-                            )} />
+                            )}
+                        />
+
                     </div>
                     <DialogFooter>
                         {isLoading ? (
