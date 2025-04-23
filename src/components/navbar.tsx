@@ -1,10 +1,11 @@
+"use client"
 
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 // import { NavigationMenu, NavigationMenuList, NavigationMenuLink } from "@/components/ui/navigation-menu"
 import { Menu, Pencil } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getInitials } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
     DropdownMenu,
@@ -16,12 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { FormSearch } from "./form-search"
 import { SignOutButton } from "@clerk/nextjs"
-import { User } from "@clerk/nextjs/server"
+import { User as UserType } from "@prisma/client"
 
 
 // Define the NavbarProps type
 interface NavbarProps {
-    user: User;
+    user: UserType;
 }
 
 export default function Navbar({ user }: NavbarProps) {
@@ -70,7 +71,7 @@ export default function Navbar({ user }: NavbarProps) {
                 </div>
             </div>
             <div className={cn("flex gap-8 items-center justify-end")}>
-                <Link href={"post/create"} className={cn("flex gap-2")}>
+                <Link href={"/post/create"} className={cn("flex gap-2")}>
                     <Pencil size={20} color="#ffffff" />
                     <p>Menulis</p>
                 </Link>
@@ -79,16 +80,15 @@ export default function Navbar({ user }: NavbarProps) {
                 <DropdownMenu>
                     <DropdownMenuTrigger>
                         <Avatar>
-                            <AvatarImage src={user.hasImage ? user.imageUrl : ""} />
+                            <AvatarImage src={user.image ?? ""} />
                             <AvatarFallback>
-                                {user.firstName?.charAt(0).toUpperCase()}
-                                {user.lastName?.charAt(0).toUpperCase()}
+                                {getInitials(user.name)}
                             </AvatarFallback>
                         </Avatar>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>
-                            {`${user.firstName} ${user.lastName}`}
+                            {user.name}
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>

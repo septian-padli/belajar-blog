@@ -1,7 +1,7 @@
 // components/ImageCropperModal.tsx
 "use client";
 import { useState } from "react";
-import Cropper from "react-easy-crop";
+import Cropper, { Area } from "react-easy-crop";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { compressImage, getCroppedImg } from "@/lib/utils";
@@ -23,11 +23,12 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
 }) => {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
-    const handleCropComplete = (_: any, croppedPixels: any) => {
+    const handleCropComplete = (_: Area, croppedPixels: Area) => {
         setCroppedAreaPixels(croppedPixels);
     };
+
 
     const handleSave = async () => {
         const blob = await getCroppedImg(imageSrc, croppedAreaPixels);

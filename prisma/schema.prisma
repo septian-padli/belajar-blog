@@ -37,6 +37,7 @@ model Post {
   categoryId    String
   category      Category  @relation("PostCategories", fields: [categoryId], references: [id])
   title         String
+  slug          String
   content       String
   featuredImage String
   published     Boolean   @default(false)

@@ -95,13 +95,7 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
                     Make changes to your profile here. Click save when you are done.
                 </DialogDescription>
             </DialogHeader>
-            <ImageCropperModal
-                open={openCropper}
-                imageSrc={imageSrc}
-                aspectRatio={1} // or 16/9
-                onClose={() => setOpenCropper(false)}
-                onCropDone={handleImageCropped}
-            />
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} >
                     <div className="flex flex-col gap-4 py-4">
@@ -160,6 +154,15 @@ const ModalEditProfile: React.FC<modalEditProfileProps> = ({ user, onUserUpdated
                 </form>
 
             </Form>
+
+            {/* modal image editor */}
+            <ImageCropperModal
+                open={openCropper}
+                imageSrc={imageSrc}
+                aspectRatio={1}
+                onClose={() => setOpenCropper(false)}
+                onCropDone={handleImageCropped}
+            />
         </DialogContent>
     )
 }
