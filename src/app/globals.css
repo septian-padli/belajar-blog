@@ -125,11 +125,11 @@
 
 	.post-view h1,
 	.ck-content h1 {
-		@apply text-4xl;
+		@apply text-4xl/normal;
 	}
 	.post-view h2,
 	.ck-content h2 {
-		@apply text-3xl;
+		@apply text-3xl/normal;
 	}
 	.post-view h3,
 	.ck-content h3 {
@@ -149,7 +149,7 @@
 	}
 	.post-view p,
 	.ck-content p {
-		@apply text-base;
+		@apply text-base/normal;
 	}
 
 	.post-view a,
@@ -157,11 +157,37 @@
 		@apply text-base text-white hover:text-zinc-200 underline;
 	}
 
+	.post-view hr {
+		@apply my-2;
+	}
+	.post-view pre {
+		@apply p-4 my-2;
+	}
+
 	.post-view ul,
 	.post-view ol,
 	.ck-content ul,
 	.ck-content ol {
 		list-style-position: inside !important;
+	}
+}
+
+@layer components {
+	.post-view table {
+		@apply w-full text-sm text-left border border-zinc-200 border-collapse overflow-hidden rounded-lg my-6;
+	}
+
+	.post-view tbody {
+		@apply border border-zinc-200;
+	}
+
+	.post-view th,
+	.post-view td {
+		@apply p-3 border border-zinc-200;
+	}
+
+	.post-view tr:hover {
+		@apply bg-zinc-800;
 	}
 }
 

@@ -34,7 +34,6 @@ import {
     LinkImage,
     List,
     ListProperties,
-    Markdown,
     MediaEmbed,
     Paragraph,
     PasteFromMarkdownExperimental,
@@ -118,6 +117,12 @@ export default function RichEditor({ value, onChange, placeholder }: EditorProps
                 title: 'Heading 6',
                 class: 'ck-heading_heading6',
             },
+            {
+                model: 'paragraph',
+                view: 'p',
+                title: 'Paragraph',
+                class: 'ck-heading_paragraph',
+            },
         ] as const;
 
         // Convert ke mutable object
@@ -187,7 +192,6 @@ export default function RichEditor({ value, onChange, placeholder }: EditorProps
                     LinkImage,
                     List,
                     ListProperties,
-                    Markdown,
                     MediaEmbed,
                     Paragraph,
                     PasteFromMarkdownExperimental,
