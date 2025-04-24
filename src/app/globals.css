@@ -122,4 +122,94 @@
 	.container {
 		@apply mx-auto;
 	}
+
+	.post-view h1,
+	.ck-content h1 {
+		@apply text-4xl;
+	}
+	.post-view h2,
+	.ck-content h2 {
+		@apply text-3xl;
+	}
+	.post-view h3,
+	.ck-content h3 {
+		@apply text-2xl;
+	}
+	.post-view h4,
+	.ck-content h4 {
+		@apply text-xl;
+	}
+	.post-view h5,
+	.ck-content h5 {
+		@apply text-lg;
+	}
+	.post-view h6,
+	.ck-content h6 {
+		@apply text-base;
+	}
+	.post-view p,
+	.ck-content p {
+		@apply text-base;
+	}
+
+	.post-view a,
+	.ck-content a {
+		@apply text-base text-white hover:text-zinc-200 underline;
+	}
+
+	.post-view ul,
+	.post-view ol,
+	.ck-content ul,
+	.ck-content ol {
+		list-style-position: inside !important;
+	}
+}
+
+.main-container {
+	font-family: "Lato";
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.ck-content {
+	line-height: 1.5;
+}
+
+.ck-toolbar,
+.ck-content,
+.ck-button,
+.ck-list,
+.ck-dialog,
+.ck-form__header__label,
+.ck-input,
+.ck-label,
+.ck-character-info__code,
+.ck-character-info__name,
+.ck-balloon-panel,
+.ck-dropdown__panel {
+	/* important */
+	background: var(--background) !important;
+	color: var(--foreground) !important;
+}
+
+.ck-content blockquote {
+	border-color: var(--color-muted-foreground) !important;
+}
+
+pre {
+	background-color: var(--color-zinc-800) !important;
+	color: var(--color-zinc-200) !important;
+}
+pre[data-language]::after {
+	background: var(--color-zinc-200) !important;
+	color: var(--color-zinc-800) !important;
+}
+
+.ck-editor__editable .ck-list-bogus-paragraph {
+	display: inline-block !important;
+}
+
+.ck-horizontal-line > hr {
+	background: var(--color-muted-foreground) !important;
+	@apply rounded-full;
 }
