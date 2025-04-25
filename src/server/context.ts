@@ -1,6 +1,8 @@
-// server/context.ts
-export type Context = object;
+import { auth } from "@clerk/nextjs/server";
 
-export async function createContext(): Promise<Context> {
-  return {};
+export async function createContext() {
+  const { userId } = await auth();
+  return { userId };
 }
+
+export type Context = Awaited<ReturnType<typeof createContext>>;

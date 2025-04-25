@@ -15,6 +15,15 @@ export function getInitials(name: string) {
 		.toUpperCase();
 }
 
+export function debounce<T extends (...args: any[]) => void>(func: T, wait: number) {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+
 export async function retryConnect(fn, retries = 3) {
 	try {
 		return await fn();
@@ -28,6 +37,7 @@ export async function retryConnect(fn, retries = 3) {
 
 
 // Helper untuk crop gambar
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -76,4 +86,54 @@ function createImage(url: string): Promise<HTMLImageElement> {
     img.setAttribute("crossOrigin", "anonymous");
     img.src = url;
   });
+}
+
+export function convertOembedToIframe(html: string) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  div.querySelectorAll("oembed[url]").forEach((element) => {
+      const url = element.getAttribute("url");
+      if (url && url.includes("youtube.com")) {
+          const videoId = new URL(url).searchParams.get("v");
+          if (videoId) {
+              const iframe = document.createElement("iframe");
+
+              iframe.className = "mx-auto mt-2 w-3/4 aspect-video";
+
+              iframe.setAttribute("src", `https://www.youtube.com/embed/${videoId}`);
+              iframe.setAttribute("frameborder", "0");
+              iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
+              iframe.setAttribute("allowfullscreen", "true");
+              element.replaceWith(iframe);
+          }
+      }
+  });
+
+  return div.innerHTML;
+}
+
+export function convertIframeToOembed(html: string): string {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  div.querySelectorAll("iframe").forEach((iframe) => {
+      const src = iframe.getAttribute("src");
+
+      if (src && src.includes("youtube.com/embed/")) {
+          const videoId = src.split("/embed/")[1]?.split("?")[0];
+          if (videoId) {
+              const oembed = document.createElement("oembed");
+              oembed.setAttribute("url", `https://www.youtube.com/watch?v=${videoId}`);
+
+              const figure = document.createElement("figure");
+              figure.className = "media";
+              figure.appendChild(oembed);
+
+              iframe.replaceWith(figure);
+          }
+      }
+  });
+
+  return div.innerHTML;
 }

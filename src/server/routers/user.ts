@@ -1,22 +1,22 @@
-import { procedure, router } from "../trpc";
+import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { z } from "zod";
 import { prisma } from "../index";
 import { retryConnect } from "@/lib/utils";
 
 
 export const userRouter = router({
-    getUsers: procedure.query(() => {
-        return [
-            {
-                id: "1",
-                name: "John Doe",
-                email: "john@email.com"
-            }
-        ]
+    getUsers: protectedProcedure
+    .query(async () => {
+      const users = await retryConnect(() => prisma.user.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+      }));
+      return users;
     }),
-    syncWithSupabase: procedure
+    syncWithSupabase: protectedProcedure
     .input(z.object({
-      id: z.string(), // Clerk ID langsung
+      id: z.string(),
       name: z.string(),
       email: z.string().email(),
       imageUrl: z.string().url(),
@@ -53,7 +53,7 @@ export const userRouter = router({
         });
       }
     }),
-    getUserById: procedure
+    getUserById: publicProcedure
     .input(z.object({
       id: z.string(),
     }))
@@ -66,7 +66,7 @@ export const userRouter = router({
 
       return user;
     }),
-    getImagePathById: procedure
+    getImagePathById: publicProcedure
     .input(z.object({
       id: z.string(),
     }))
@@ -78,7 +78,7 @@ export const userRouter = router({
       }));
       return user?.image;
     }),
-    updateUser: procedure
+    updateUser: protectedProcedure
     .input(z.object({
       id: z.string(), // Clerk ID
       name: z.string().min(1),
