@@ -2,6 +2,7 @@ import { protectedProcedure, router } from "../trpc";
 import { z } from "zod";
 import { prisma } from "../index";
 import { retryConnect } from "@/lib/utils";
+import { TRPCError } from "@trpc/server";
 
 
 export const categoryRouter = router({
@@ -29,21 +30,42 @@ export const categoryRouter = router({
       })
     );
   }),
-
   createCategory: protectedProcedure
   .input(z.object({
-      name: z.string(),
-      slug: z.string(),
+    name: z.string(),
+    slug: z.string(),
   }))
   .mutation(async ({ input }) => {
-      const category = await retryConnect(() => prisma.category.create({
-          data: {
-              name: input.name,
-              slug: input.slug,
-          }
-      }));
-      return category;
+    // Cek nama apakah sudah ada (case-insensitive)
+    const existing = await prisma.category.findFirst({
+      where: {
+        name: {
+          equals: input.name,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    if (existing) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Category with this name already exists.",
+      });
+    }
+
+    // Jika belum ada, buat kategori baru
+    const category = await retryConnect(() =>
+      prisma.category.create({
+        data: {
+          name: input.name,
+          slug: input.slug,
+        },
+      })
+    );
+
+    return category;
   }),
+
     
     
 
