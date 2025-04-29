@@ -3,8 +3,8 @@ import { getTrpcCaller } from "@/server/server";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
-    const name = formData.get("name")?.toString();
-    const slug = formData.get("slug")?.toString();
+    const name = formData.get("name")?.toString().toLowerCase();
+    const slug = formData.get("slug")?.toString().toLowerCase();
 
   if (!name || !slug) {
     return new Response("Name and slug are required", { status: 400 });
@@ -25,10 +25,9 @@ export async function POST(req: Request) {
       name,
       slug,
     });
-
     return Response.json({ success: true, category });
   } catch (err) {
-    console.error(err);
+    console.error("[ERROR DI API]" , err);
     return new Response("Failed to create category", { status: 500 });
   }
 }

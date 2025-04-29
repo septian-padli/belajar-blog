@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import RichEditor from "@/components/ckeditor/ckeditor"
 import { Separator } from "@radix-ui/react-dropdown-menu"
 import { useState } from "react"
 import { convertIframeToOembed, convertOembedToIframe, debounce } from "@/lib/utils"
@@ -45,11 +44,18 @@ import {
 } from "@/components/ui/dialog"
 import { Category } from "@prisma/client"
 import FormCategory from "./FormCategory"
+import ImageCropperModal from "@/components/imageCropper"
+import { Switch } from "@/components/ui/switch"
+import slugify from "slugify"
+import { useRouter } from "next/navigation"
+import RichEditor from "@/components/ckeditor/ckeditor-cdn"
 
 const formSchema = z.object({
     title: z.string().min(2).max(50),
     category: z.string().min(2),
-    content: z.string().min(2)
+    content: z.string().min(2),
+    featuredImage: z.any().nullable(),
+    isPublish: z.boolean()
 });
 
 const FormPost = () => {
@@ -62,6 +68,12 @@ const FormPost = () => {
 
     const [categories, setCategories] = useState<Category[]>([])
     const [inputSearch, setInputSearch] = useState("");
+
+    const [openCropper, setOpenCropper] = useState(false);
+    const [imageSrc, setImageSrc] = useState("");
+    const [croppedImage, setCroppedImage] = useState<File | null>(null);
+
+    const router = useRouter();
 
     const defaultContent = convertIframeToOembed(`
 <h2>📌 Informasi Penting</h2>
@@ -97,24 +109,36 @@ const FormPost = () => {
     <tr><td>Budi</td><td>30</td><td>Surabaya</td></tr>
   </tbody>
 </table>
-`);
+    `);
 
     useEffect(() => {
-        setLoading(true)
         const fetchInitialCategories = async () => {
             setLoading(true)
             const res = await fetch("/api/category/get?limit=5");
             const data = await res.json();
             setCategories(data);
+            setLoading(false)
         };
         fetchInitialCategories();
-        setLoading(false)
     }, []);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageSrc(URL.createObjectURL(file));
+            setOpenCropper(true);
+        }
+    };
+
+    const handleImageCropped = (file: File) => {
+        setCroppedImage(file);
+    };
 
     const handleSearch = async (query: string) => {
         setLoading(true);
         setInputSearch(query);
         try {
+
             const res = await fetch(`/api/category/get?name=${encodeURIComponent(query)}`);
             const data = await res.json();
             setCategories(data);
@@ -134,17 +158,67 @@ const FormPost = () => {
         defaultValues: {
             title: 'lorem ipsum dolor sit amet',
             category: "",
-            content: defaultContent, // ⬅️ set default value di sini
+            content: defaultContent ?? "",
+            featuredImage: "",
+            isPublish: false,
         },
     });
 
-    // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        setSubmittedTitle(values.title);
-        const transformedContent = convertOembedToIframe(values.content); // hanya ubah <oembed>, lainnya tetap
-        setSubmittedContent(transformedContent);
+    async function generateSlug(title: string) {
+        let slug = slugify(title, { lower: true, strict: true });
 
-        console.log("konten: ", values.content)
+        const resSlug = await fetch(`/api/post/getBySlug/${slug}`, {
+            method: "GET",
+            cache: "no-store", // optional: biar selalu fresh datanya
+        });
+        const existingSlug = (await resSlug.json()).slug as string;
+
+        if (existingSlug) {
+            slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`
+        }
+
+        return slug;
+    }
+
+    function previewContent() {
+        const values = form.getValues();
+        setSubmittedTitle(values.title || "No Title");
+        setSubmittedContent(values.content || "<p>No content provided.</p>");
+    }
+
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setLoading(true)
+        const transformedContent = convertOembedToIframe(values.content); // hanya ubah <oembed>, lainnya tetap
+        const slug = await generateSlug(values.title);
+
+        const formData = new FormData();
+        formData.append("title", values.title);
+        formData.append("slug", slug);
+        formData.append("category", values.category);
+        formData.append("content", transformedContent);
+        formData.append("isPublish", String(values.isPublish));
+
+        if (croppedImage) {
+            formData.append("image", croppedImage);
+        }
+
+        try {
+            console.log("Form data:", formData);
+            const res = await fetch("/api/post/create", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to update profile");
+            }
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+            router.push(`/post/${slug}`);
+        }
     }
 
     return (
@@ -159,9 +233,18 @@ const FormPost = () => {
                             Buat kategori baru disini
                         </DialogDescription>
                     </DialogHeader>
-                    <FormCategory />
+                    <FormCategory inputValue={inputSearch} modalOpened={setOpenModal} />
                 </DialogContent>
             </Dialog>
+
+            {/* modal image editor */}
+            <ImageCropperModal
+                open={openCropper}
+                imageSrc={imageSrc}
+                aspectRatio={16 / 9}
+                onClose={() => setOpenCropper(false)}
+                onCropDone={handleImageCropped}
+            />
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -183,7 +266,6 @@ const FormPost = () => {
                                     </FormItem>
                                 )}
                             />
-
                         </div>
                         <div className="col-span-1">
                             <FormField
@@ -193,80 +275,136 @@ const FormPost = () => {
                                     <FormItem>
                                         <FormLabel>Category</FormLabel>
                                         <FormControl>
-                                            <Popover open={openCategory} onOpenChange={setOpenCategory}>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        role="combobox"
-                                                        aria-expanded={openCategory}
-                                                        className="justify-between"
-                                                    >
-                                                        {valueCategory
-                                                            ? categories.find((category) => category.id === valueCategory)?.name
-                                                            : "Select category..."}
-                                                        <ChevronsUpDown className="opacity-50" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-[480px] p-0">
-                                                    <Command key={JSON.stringify(categories)}>
-                                                        <CommandInput autoFocus placeholder={(inputSearch == '') ? "Search category..." : inputSearch} className="h-9"
-                                                            onValueChange={(query) => {
-                                                                debouncedSearch(query);
-                                                            }} />
-                                                        <CommandList>
-                                                            {loading ? (
-                                                                <CommandGroup>
-                                                                    <CommandItem>Loading...</CommandItem>
-                                                                </CommandGroup>
-                                                            ) : categories.length === 0 ? (
-                                                                <>
-                                                                    {/* Tampilkan "No category found" hanya kalau tidak sedang loading dan hasil kosong */}
-                                                                    <CommandEmpty>
-                                                                        <p className="mb-2">No category found.</p>
-                                                                        <Button variant="outline" onClick={() => setOpenModal(true)}>
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                                                            </svg>
-                                                                            Create Category
-                                                                        </Button>
-                                                                    </CommandEmpty>
-                                                                </>
-                                                            ) : (
-                                                                <CommandGroup>
-                                                                    {categories.map((category) => (
-                                                                        <CommandItem
-                                                                            key={category.id}
-                                                                            value={category.id}
-                                                                            onSelect={(currentValue) => {
-                                                                                setValueCategory(currentValue === valueCategory ? "" : currentValue);
-                                                                                setOpenCategory(false);
-                                                                            }}
-                                                                        >
-                                                                            {category.name}
-                                                                            <Check
-                                                                                className={cn(
-                                                                                    "ml-auto",
-                                                                                    valueCategory === category.id ? "opacity-100" : "opacity-0"
-                                                                                )}
-                                                                            />
-                                                                        </CommandItem>
-                                                                    ))}
-                                                                </CommandGroup>
-                                                            )}
-                                                        </CommandList>
+                                            <div className="w-full">
+                                                <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            role="combobox"
+                                                            aria-expanded={openCategory}
+                                                            className="justify-between w-full"
+                                                        >
+                                                            {valueCategory
+                                                                ? categories.find((category) => category.id === valueCategory)?.name
+                                                                : "Select category..."}
+                                                            <ChevronsUpDown className="opacity-50" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[480px] p-0">
+                                                        <Command key={JSON.stringify(categories)}>
+                                                            <CommandInput autoFocus placeholder={(inputSearch == '') ? "Search category..." : inputSearch} className="h-9"
+                                                                onValueChange={(query) => {
+                                                                    debouncedSearch(query);
+                                                                }} />
+                                                            <CommandList>
+                                                                {loading ? (
+                                                                    <CommandGroup>
+                                                                        <CommandItem>Loading...</CommandItem>
+                                                                    </CommandGroup>
+                                                                ) : categories.length === 0 ? (
+                                                                    <>
+                                                                        {/* Tampilkan "No category found" hanya kalau tidak sedang loading dan hasil kosong */}
+                                                                        <CommandEmpty>
+                                                                            <p className="mb-2">No category found.</p>
+                                                                            <Button variant="outline" onClick={() => setOpenModal(true)}>
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                                                </svg>
+                                                                                Create Category
+                                                                            </Button>
+                                                                        </CommandEmpty>
+                                                                    </>
+                                                                ) : (
+                                                                    <CommandGroup>
+                                                                        {categories.map((category) => (
+                                                                            <CommandItem
+                                                                                key={category.id}
+                                                                                value={category.id}
+                                                                                onSelect={(currentValue) => {
+                                                                                    const selectedCategory = currentValue === valueCategory ? "" : currentValue;
+                                                                                    setValueCategory(selectedCategory);
+                                                                                    field.onChange(selectedCategory); // Update form schema
+                                                                                    setOpenCategory(false);
+                                                                                }}
+                                                                            >
+                                                                                {category.name}
+                                                                                <Check
+                                                                                    className={cn(
+                                                                                        "ml-auto",
+                                                                                        valueCategory === category.id ? "opacity-100" : "opacity-0"
+                                                                                    )}
+                                                                                />
+                                                                            </CommandItem>
+                                                                        ))}
+                                                                    </CommandGroup>
+                                                                )}
+                                                            </CommandList>
 
-                                                    </Command>
-                                                </PopoverContent>
-                                            </Popover>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Input type="hidden" value={valueCategory} {...field} /> {/* Bind field to form */}
+                                            </div>
                                         </FormControl>
                                         <FormDescription>
-                                            This is your public display name.
+                                            This is your category {valueCategory}.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+                        </div>
+                        <div className="col-span-1">
+                            <FormField
+                                control={form.control}
+                                name="featuredImage"
+                                render={() => (
+                                    <FormItem>
+                                        <FormLabel>featured Image</FormLabel>
+                                        <FormControl >
+                                            <div className="flex gap-2">
+                                                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                                                {croppedImage && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        className="w-fit"
+                                                        onClick={() => setOpenCropper(true)}
+                                                    >
+                                                        Edit Image
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </FormControl>
+                                        <FormDescription>
+                                            This is your Thumbnail image.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="col-span-1">
+                            <FormField
+                                control={form.control}
+                                name="isPublish"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Publish Now</FormLabel>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
 
+                                        </FormControl>
+                                        <FormDescription>
+                                            On switch if you want publish now.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                         <div className="col-span-2">
                             <FormField
@@ -278,7 +416,10 @@ const FormPost = () => {
                                         <FormControl>
                                             <RichEditor
                                                 placeholder="Type your message here."
-                                                value={field.value} onChange={field.onChange}
+                                                value={field.value}
+                                                onChange={(value) => {
+                                                    field.onChange(value);
+                                                }}
                                             />
                                         </FormControl>
                                         <FormDescription>
@@ -291,7 +432,18 @@ const FormPost = () => {
 
                         </div>
                     </div>
-                    <Button type="submit">Submit</Button>
+                    <div className="flex gap-2 justify-end">
+                        <Button type="button" variant={"outline"} onClick={previewContent}>Preview</Button>
+                        {loading ? (
+                            <Button type="submit" disabled={loading} className="cursor-default" >
+                                Saving...
+                            </Button>
+                        ) : (
+                            <Button type="submit" className="cursor-pointer">
+                                Save changes
+                            </Button>
+                        )}
+                    </div>
                 </form>
 
                 <Separator />

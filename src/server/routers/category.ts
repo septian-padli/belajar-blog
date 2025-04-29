@@ -40,7 +40,7 @@ export const categoryRouter = router({
     const existing = await prisma.category.findFirst({
       where: {
         name: {
-          equals: input.name,
+          equals: input.slug,
           mode: "insensitive",
         },
       },

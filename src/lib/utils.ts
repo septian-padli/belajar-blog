@@ -114,26 +114,31 @@ export function convertOembedToIframe(html: string) {
 }
 
 export function convertIframeToOembed(html: string): string {
-  const div = document.createElement("div");
-  div.innerHTML = html;
+    if (typeof document === "undefined") {
+        console.error("convertIframeToOembed can only be run in a browser environment.");
+        return html; // Return the original HTML if not in a browser
+    }
 
-  div.querySelectorAll("iframe").forEach((iframe) => {
-      const src = iframe.getAttribute("src");
+    const div = document.createElement("div");
+    div.innerHTML = html;
 
-      if (src && src.includes("youtube.com/embed/")) {
-          const videoId = src.split("/embed/")[1]?.split("?")[0];
-          if (videoId) {
-              const oembed = document.createElement("oembed");
-              oembed.setAttribute("url", `https://www.youtube.com/watch?v=${videoId}`);
+    div.querySelectorAll("iframe").forEach((iframe) => {
+        const src = iframe.getAttribute("src");
 
-              const figure = document.createElement("figure");
-              figure.className = "media";
-              figure.appendChild(oembed);
+        if (src && src.includes("youtube.com/embed/")) {
+            const videoId = src.split("/embed/")[1]?.split("?")[0];
+            if (videoId) {
+                const oembed = document.createElement("oembed");
+                oembed.setAttribute("url", `https://www.youtube.com/watch?v=${videoId}`);
 
-              iframe.replaceWith(figure);
-          }
-      }
-  });
+                const figure = document.createElement("figure");
+                figure.className = "media";
+                figure.appendChild(oembed);
 
-  return div.innerHTML;
+                iframe.replaceWith(figure);
+            }
+        }
+    });
+
+    return div.innerHTML;
 }

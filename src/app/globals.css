@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -192,10 +193,16 @@
 }
 
 .main-container {
-	font-family: "Lato";
+	/* font-family: "Lato"; */
 	margin-left: auto;
 	margin-right: auto;
+	@apply w-full;
 }
+
+/* .editor-container_classic-editor .editor-container__editor {
+	min-width: 1280px;
+	max-width: 1280px;
+} */
 
 .ck-content {
 	line-height: 1.5;

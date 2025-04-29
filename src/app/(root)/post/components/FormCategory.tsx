@@ -22,14 +22,18 @@ const formSchema = z.object({
     name: z.string().min(2),
 })
 
+interface FormCategoryProps {
+    inputValue?: string
+    modalOpened: (statModal: boolean) => void
+}
 
-const FormCategory = () => {
+const FormCategory: React.FC<FormCategoryProps> = ({ inputValue, modalOpened }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
+            name: inputValue ?? "",
         },
     })
 
@@ -45,25 +49,6 @@ const FormCategory = () => {
         formData.append("name", name);
         formData.append("slug", slug);
 
-        // try {
-        //     const res = await fetch("/api/user/update", {
-        //         method: "PATCH",
-        //         body: formData,
-        //     });
-
-        //     if (!res.ok) {
-        //         throw new Error("Failed to update profile");
-        //     }
-
-        //     const data = await res.json();
-
-        //     onUserUpdated(data.user); // Update state parent component
-        // } catch (err) {
-        //     console.error(err);
-        // } finally {
-        //     setIsLoading(false);
-        // }
-
         try {
             const res = await fetch("/api/category/create", {
                 method: "POST",
@@ -78,6 +63,7 @@ const FormCategory = () => {
             toast.error("Failed to create category");
         } finally {
             setIsLoading(false);
+            modalOpened(false);
         }
     };
 
