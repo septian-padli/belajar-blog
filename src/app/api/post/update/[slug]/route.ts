@@ -19,28 +19,39 @@ export async function PATCH(
 	const image = formData.get("image") as File | null;
 	const newSlug = formData.get("newSlug") as string;
 
-	console.log("newSlug", newSlug);
 	const post = await prisma.post.findUnique({ where: { slug: params.slug } });
-	console.log("old slug", post?.slug);
 	if (!post)
 		return NextResponse.json({ error: "Post not found" }, { status: 404 });
 
 	let imagePath = post.featuredImage;
 
 	if (image && image.size > 0) {
+		// Hapus gambar lama jika ada
+		if (post.featuredImage) {
+			const { error: deleteError } = await supabaseServer.storage
+				.from("blog-image")
+				.remove([post.featuredImage]);
+
+			if (deleteError) {
+				console.error("Failed to delete old image:", deleteError.message);
+				return new Response("Failed to delete old image", { status: 500 });
+			}
+		}
+
+		// Unggah gambar baru
 		const buffer = Buffer.from(await image.arrayBuffer());
 		const fileExt = image.name.split(".").pop();
 		const fileName = `post/featured/${Date.now()}-${randomUUID()}.${fileExt}`;
 
-		const { error } = await supabaseServer.storage
+		const { error: uploadError } = await supabaseServer.storage
 			.from("blog-image")
 			.upload(fileName, buffer, {
 				contentType: image.type,
 				upsert: true,
 			});
 
-		if (error) {
-			console.error("Upload error", error.message);
+		if (uploadError) {
+			console.error("Upload error", uploadError.message);
 			return new Response("Failed to upload image", { status: 500 });
 		}
 
