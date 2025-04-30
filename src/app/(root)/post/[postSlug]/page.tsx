@@ -2,8 +2,10 @@ import { cn } from "@/lib/utils"
 import LeftSideHome from "../../components/left-side-home"
 import Image from "next/image"
 import Link from "next/link"
-import { Post } from "@prisma/client" // 👉 Menggunakan tipe dari Prisma Client
 import { supabase } from "@/lib/supabase/client"
+import { cookies } from "next/headers"
+import { Button } from "@/components/ui/button"
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface PostPageProps {
     params: { postSlug: string }
@@ -13,33 +15,45 @@ const PostPage: React.FC<PostPageProps> = async ({ params }: PostPageProps) => {
     const { postSlug } = await params;
 
     const urlFetch = `${process.env.NEXT_PUBLIC_BASE_URL}/api/post/getBySlug/${encodeURIComponent(postSlug)}`
-    console.log("url Fetch", urlFetch);
+
+    const cookieStore = cookies();
+    const cookie = (await cookieStore).toString();
 
     const res = await fetch(
         urlFetch, {
         method: "GET",
         cache: "no-store",
+        headers: {
+            Cookie: cookie
+        },
         next: {
             revalidate: 0,
         },
     });
 
-    console.log("Response status:", res.status); // 👉 log status respons
     if (!res.ok) {
         if (res.status === 404) return <div>data not found</div>;
-        console.error("Error response:", await res.json()); // 👉 log error detail dari API
         throw new Error("Gagal mengambil data post.");
     }
 
     const post = await res.json();
-    console.log("Post data:", post); // 👉 log data post yang diterima
     const { data } = supabase.storage.from('blog-image').getPublicUrl(post.featuredImage ?? "")
     post.featuredImage = data.publicUrl ?? "";
 
     return (
         <div className={cn("gap-10 flex")}>
             <div className="w-3/4">
-                <h1 className="text-4xl font-semibold mb-2">{post.title}</h1>
+                <div className="flex justify-between gap-8 ">
+                    <h1 className="text-4xl font-semibold mb-2 text-wrap">{post.title}</h1>
+                    <div className="flex gap-2">
+                        <Button variant={"destructive"}>
+                            <Trash2 />
+                        </Button>
+                        <Button variant={"outline"}>
+                            <Pencil />
+                        </Button>
+                    </div>
+                </div>
                 <p className="mb-2">Category: {post.category.name}</p>
                 <p className="text-muted-foreground mb-8">
                     Published {new Date(post.createdAt).toLocaleDateString("en-US", {

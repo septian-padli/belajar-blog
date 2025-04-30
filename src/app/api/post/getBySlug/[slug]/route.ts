@@ -1,31 +1,31 @@
 // route.ts
 import { getTrpcCaller } from "@/server/server";
+import { getAuth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  console.log("Endpoint /api/post/getBySlug/[slug] dipanggil"); // 👉 log awal
-  console.log("Params diterima:", params.slug); // 👉 log params
 
-  const slug = params.slug;
+  const {slug} = await params;
+  const {userId} = getAuth(req);
 
   if (!slug) {
     return NextResponse.json({ error: "Missing slug" }, { status: 400 });
   }
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const trpc = await getTrpcCaller();
-  console.log("Slug di route:", slug); // 👉 log slug
 
   const post = await trpc.post.getPostBySlug({ slug });
 
   if (!post) {
-    console.error("Post not found for slug:", slug); // 👉 log jika post tidak ditemukan
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  console.log("Post ditemukan:", post); // 👉 log jika post ditemukan
   return NextResponse.json(post);
 }
 

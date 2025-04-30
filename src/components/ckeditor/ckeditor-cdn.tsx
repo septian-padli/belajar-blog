@@ -23,12 +23,10 @@ export default function RichEditor({ value, onChange, placeholder }: EditorProps
     const cloud = useCKEditorCloud({ version: '45.0.0' });
 
     useEffect(() => {
-        let isMounted = true; // Flag to track if the component is still mounted
 
         setIsLayoutReady(true);
 
         return () => {
-            isMounted = false; // Set flag to false when the component unmounts
             setIsLayoutReady(false); // Cleanup state
         };
     }, []);

@@ -28,7 +28,7 @@ export const postRouter = router({
     }),
 
     // get post by slug
-    getPostBySlug: publicProcedure
+    getPostBySlug: protectedProcedure
     .input(z.object({
       slug: z.string(),
     }))
