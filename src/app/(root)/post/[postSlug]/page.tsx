@@ -50,7 +50,9 @@ const PostPage: React.FC<PostPageProps> = async ({ params }: PostPageProps) => {
                             <Trash2 />
                         </Button>
                         <Button variant={"outline"}>
-                            <Pencil />
+                            <Link href={`/post/${post.slug}/edit`}>
+                                <Pencil />
+                            </Link>
                         </Button>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import imageCompression from "browser-image-compression";
+import slugify from "slugify";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -142,3 +143,19 @@ export function convertIframeToOembed(html: string): string {
 
     return div.innerHTML;
 }
+
+export async function generateSlugPost(title: string) {
+        let slug = slugify(title, { lower: true, strict: true });
+
+        const resSlug = await fetch(`/api/post/getBySlug/${slug}`, {
+            method: "GET",
+            cache: "no-store", // optional: biar selalu fresh datanya
+        });
+        const existingSlug = (await resSlug.json()).slug as string;
+
+        if (existingSlug) {
+            slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`
+        }
+
+        return slug;
+    }

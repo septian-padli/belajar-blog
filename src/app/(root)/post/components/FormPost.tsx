@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Separator } from "@radix-ui/react-dropdown-menu"
 import { useState } from "react"
-import { convertIframeToOembed, convertOembedToIframe, debounce } from "@/lib/utils"
+import { convertIframeToOembed, convertOembedToIframe, debounce, generateSlugPost } from "@/lib/utils"
 import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useEffect } from "react"
@@ -46,9 +46,9 @@ import { Category } from "@prisma/client"
 import FormCategory from "./FormCategory"
 import ImageCropperModal from "@/components/imageCropper"
 import { Switch } from "@/components/ui/switch"
-import slugify from "slugify"
 import { useRouter } from "next/navigation"
 import RichEditor from "@/components/ckeditor/ckeditor-cdn"
+import Image from "next/image"
 
 const formSchema = z.object({
     title: z.string().min(2).max(50),
@@ -58,12 +58,18 @@ const formSchema = z.object({
     isPublish: z.boolean()
 });
 
-const FormPost = () => {
+const FormPost = ({
+    mode = "create",
+    post,
+}: {
+    mode?: "create" | "edit";
+    post?: any;
+}) => {
     const [loading, setLoading] = useState(false)
     const [submittedTitle, setSubmittedTitle] = useState('');
     const [submittedContent, setSubmittedContent] = useState('');
     const [openCategory, setOpenCategory] = useState(false)
-    const [valueCategory, setValueCategory] = useState("")
+    const [valueCategory, setValueCategory] = useState(post?.categoryId || "")
     const [openModal, setOpenModal] = useState(false)
 
     const [categories, setCategories] = useState<Category[]>([])
@@ -75,41 +81,41 @@ const FormPost = () => {
 
     const router = useRouter();
 
-    const defaultContent = convertIframeToOembed(`
-<h2>📌 Informasi Penting</h2>
-<p>Ini adalah <strong>konten demo</strong> yang memanfaatkan fitur-fitur utama dari editor CKEditor:</p>
-<ul>
-  <li><strong>Bold</strong>, <em>Italic</em>, <u>Underline</u>, <s>Strikethrough</s></li>
-  <li><sub>Subscript</sub> dan <sup>Superscript</sup>, serta <code>Inline code</code></li>
-  <li><a href="https://example.com" target="_blank">Link ke situs eksternal</a></li>
-  <li>Special Character: © ™ ∞ ☕ ★</li>
-</ul>
-<hr>
-<h3>📋 List & Alignment</h3>
-<p style="text-align: left;">Ini teks rata kiri</p>
-<p style="text-align: center;">Ini teks rata tengah</p>
-<p style="text-align: right;">Ini teks rata kanan</p>
-<ol>
-  <li>Langkah pertama</li>
-  <li>Langkah kedua</li>
-</ol>
-<blockquote>"Kutipan penting yang ingin disorot."</blockquote>
-<pre><code class="language-js">function helloWorld() {
-    console.log("Hello, world!");
-}</code></pre>
-<h3>📺 Media & Tabel</h3>
-<figure class="media"><iframe class="mx-auto mt-2 w-3/4 aspect-video" src="https://www.youtube.com/embed/Y78JLjlXP7g?si=ZMLaNEBeZ6MPmoOg" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe></figure>
-<p>Contoh tabel:</p>
-<table>
-  <thead>
-    <tr><th>Nama</th><th>Umur</th><th>Kota</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Ana</td><td>23</td><td>Bandung</td></tr>
-    <tr><td>Budi</td><td>30</td><td>Surabaya</td></tr>
-  </tbody>
-</table>
-    `);
+    //     const defaultContent = convertIframeToOembed(`
+    // <h2>📌 Informasi Penting</h2>
+    // <p>Ini adalah <strong>konten demo</strong> yang memanfaatkan fitur-fitur utama dari editor CKEditor:</p>
+    // <ul>
+    //   <li><strong>Bold</strong>, <em>Italic</em>, <u>Underline</u>, <s>Strikethrough</s></li>
+    //   <li><sub>Subscript</sub> dan <sup>Superscript</sup>, serta <code>Inline code</code></li>
+    //   <li><a href="https://example.com" target="_blank">Link ke situs eksternal</a></li>
+    //   <li>Special Character: © ™ ∞ ☕ ★</li>
+    // </ul>
+    // <hr>
+    // <h3>📋 List & Alignment</h3>
+    // <p style="text-align: left;">Ini teks rata kiri</p>
+    // <p style="text-align: center;">Ini teks rata tengah</p>
+    // <p style="text-align: right;">Ini teks rata kanan</p>
+    // <ol>
+    //   <li>Langkah pertama</li>
+    //   <li>Langkah kedua</li>
+    // </ol>
+    // <blockquote>"Kutipan penting yang ingin disorot."</blockquote>
+    // <pre><code class="language-js">function helloWorld() {
+    //     console.log("Hello, world!");
+    // }</code></pre>
+    // <h3>📺 Media & Tabel</h3>
+    // <figure class="media"><iframe class="mx-auto mt-2 w-3/4 aspect-video" src="https://www.youtube.com/embed/Y78JLjlXP7g?si=ZMLaNEBeZ6MPmoOg" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe></figure>
+    // <p>Contoh tabel:</p>
+    // <table>
+    //   <thead>
+    //     <tr><th>Nama</th><th>Umur</th><th>Kota</th></tr>
+    //   </thead>
+    //   <tbody>
+    //     <tr><td>Ana</td><td>23</td><td>Bandung</td></tr>
+    //     <tr><td>Budi</td><td>30</td><td>Surabaya</td></tr>
+    //   </tbody>
+    // </table>
+    //     `);
 
     useEffect(() => {
         const fetchInitialCategories = async () => {
@@ -156,29 +162,14 @@ const FormPost = () => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            title: 'lorem ipsum dolor sit amet',
-            category: "",
-            content: defaultContent ?? "",
-            featuredImage: "",
-            isPublish: false,
+            title: post?.title || "",
+            category: post?.categoryId || "",
+            content: post?.content ? convertIframeToOembed(post.content) : "Isi konten disini...",
+            featuredImage: post?.featuredImage || null,
+            isPublish: post?.published ?? false,
         },
     });
 
-    async function generateSlug(title: string) {
-        let slug = slugify(title, { lower: true, strict: true });
-
-        const resSlug = await fetch(`/api/post/getBySlug/${slug}`, {
-            method: "GET",
-            cache: "no-store", // optional: biar selalu fresh datanya
-        });
-        const existingSlug = (await resSlug.json()).slug as string;
-
-        if (existingSlug) {
-            slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`
-        }
-
-        return slug;
-    }
 
     function previewContent() {
         const values = form.getValues();
@@ -189,36 +180,62 @@ const FormPost = () => {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setLoading(true)
         const transformedContent = convertOembedToIframe(values.content); // hanya ubah <oembed>, lainnya tetap
-        const slug = await generateSlug(values.title);
 
         const formData = new FormData();
         formData.append("title", values.title);
-        formData.append("slug", slug);
         formData.append("category", values.category);
         formData.append("content", transformedContent);
         formData.append("isPublish", String(values.isPublish));
+
 
         if (croppedImage) {
             formData.append("image", croppedImage);
         }
 
-        try {
-            console.log("Form data:", formData);
-            const res = await fetch("/api/post/create", {
-                method: "POST",
-                body: formData,
-            });
+        if (mode === "create") {
+            const slug = await generateSlugPost(values.title);
+            formData.append("slug", slug);
+            try {
+                const res = await fetch("/api/post/create", {
+                    method: "POST",
+                    body: formData,
+                });
 
-            if (!res.ok) {
-                throw new Error("Failed to update profile");
+                if (!res.ok) {
+                    throw new Error("Failed to update profile");
+                }
+
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+                router.push(`/post/${slug}`);
             }
+        } else if (mode === "edit") {
+            if (values.title !== post.title) {
+                const newSlug = await generateSlugPost(values.title);
+                formData.append("newSlug", newSlug); // Append newSlug to formData
+            }
+            formData.append("id", post.id); // Ensure the post ID is sent
+            try {
+                const res = await fetch(`/api/post/update/${post.slug}`, {
+                    method: "PATCH",
+                    body: formData,
+                });
 
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-            router.push(`/post/${slug}`);
+                if (!res.ok) {
+                    throw new Error("Failed to update post");
+                }
+
+                const redirectSlug = formData.get("newSlug") || post.slug; // Use newSlug if available
+                router.push(`/post/${redirectSlug}`);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
         }
+
     }
 
     return (
@@ -276,6 +293,7 @@ const FormPost = () => {
                                         <FormLabel>Category</FormLabel>
                                         <FormControl>
                                             <div className="w-full">
+                                                <Input type="hidden" {...field} /> {/* Bind field to form */}
                                                 <Popover open={openCategory} onOpenChange={setOpenCategory}>
                                                     <PopoverTrigger asChild>
                                                         <Button
@@ -343,7 +361,6 @@ const FormPost = () => {
                                                         </Command>
                                                     </PopoverContent>
                                                 </Popover>
-                                                <Input type="hidden" value={valueCategory} {...field} /> {/* Bind field to form */}
                                             </div>
                                         </FormControl>
                                         <FormDescription>
@@ -362,18 +379,23 @@ const FormPost = () => {
                                     <FormItem>
                                         <FormLabel>featured Image</FormLabel>
                                         <FormControl >
-                                            <div className="flex gap-2">
-                                                <Input type="file" accept="image/*" onChange={handleImageChange} />
-                                                {croppedImage && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="secondary"
-                                                        className="w-fit"
-                                                        onClick={() => setOpenCropper(true)}
-                                                    >
-                                                        Edit Image
-                                                    </Button>
+                                            <div>
+                                                {post?.featuredImage && !croppedImage && (
+                                                    <Image src={post.featuredImage} alt="Current Image" className="w-full h-auto rounded mb-2 aspect-video" width={480} height={480} />
                                                 )}
+                                                <div className="flex gap-2">
+                                                    <Input type="file" accept="image/*" onChange={handleImageChange} />
+                                                    {croppedImage && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            className="w-fit"
+                                                            onClick={() => setOpenCropper(true)}
+                                                        >
+                                                            Edit Image
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </FormControl>
                                         <FormDescription>

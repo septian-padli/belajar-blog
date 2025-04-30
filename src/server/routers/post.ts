@@ -1,4 +1,4 @@
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { protectedProcedure, router } from "../trpc";
 import { z } from "zod";
 import { prisma } from "../index";
 import { retryConnect } from "@/lib/utils";
@@ -74,8 +74,40 @@ export const postRouter = router({
           },
         })
       );
-  
       return post;
     }),
+
+    updatePost: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      slug: z.string(), // Old slug
+      title: z.string().min(2),
+      category: z.string().min(2),
+      content: z.string().min(2),
+      image: z.string(),
+      isPublish: z.boolean().optional(),
+      newSlug: z.string().optional(), // Add newSlug as optional input
+    }))
+    .mutation(async ({ input }) => {
+      const post = await retryConnect(() =>
+        prisma.post.update({
+          where: {
+            id: input.id,
+          },
+          data: {
+            title: input.title,
+            categoryId: input.category,
+            content: input.content,
+            featuredImage: input.image,
+            published: input.isPublish,
+            slug: input.newSlug || input.slug, // Update slug if newSlug is provided
+          },
+        })
+      );
+      return post;
+    }
+    ),
+
+    
           
 });
