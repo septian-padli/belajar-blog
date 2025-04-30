@@ -27,6 +27,24 @@ export const postRouter = router({
       return posts;
     }),
 
+    getImageById: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const post = await retryConnect(() =>
+        prisma.post.findUnique({
+          where: {
+            id: input.id,
+          },
+          select: {
+            featuredImage: true,
+          },
+        })
+      );
+      return post?.featuredImage;
+    }),
+
     // get post by slug
     getPostBySlug: protectedProcedure
     .input(z.object({
@@ -105,9 +123,25 @@ export const postRouter = router({
         })
       );
       return post;
-    }
-    ),
+    }),
 
-    
-          
+    deletePost: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const post = await retryConnect(() =>
+          prisma.post.delete({
+            where: {
+              id: input.id,
+            },
+          })
+        );
+        return post;
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        throw new Error("Failed to delete post.");
+      }
+    }),
 });

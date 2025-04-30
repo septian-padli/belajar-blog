@@ -5,7 +5,10 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
 import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil } from 'lucide-react';
+import ModalDeletePost from "../components/ModalDeletePost"
+
+
 
 interface PostPageProps {
     params: { postSlug: string }
@@ -40,15 +43,15 @@ const PostPage: React.FC<PostPageProps> = async ({ params }: PostPageProps) => {
     const { data } = supabase.storage.from('blog-image').getPublicUrl(post.featuredImage ?? "")
     post.featuredImage = data.publicUrl ?? "";
 
+
+
     return (
         <div className={cn("gap-10 flex")}>
             <div className="w-3/4">
                 <div className="flex justify-between gap-8 ">
                     <h1 className="text-4xl font-semibold mb-2 text-wrap">{post.title}</h1>
                     <div className="flex gap-2">
-                        <Button variant={"destructive"}>
-                            <Trash2 />
-                        </Button>
+                        <ModalDeletePost id={post.id} />
                         <Button variant={"outline"}>
                             <Link href={`/post/${post.slug}/edit`}>
                                 <Pencil />
